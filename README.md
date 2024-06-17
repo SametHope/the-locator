@@ -6,14 +6,14 @@ This is a Unity package that implements the service locator pattern in a special
 
 This implementation of the pattern defines containers/scopes for gameobjects, scenes and the global scope. It allows the user to get, register or unregister services. Getting of a service is delegated to higher containers if a lower one fails.
 
-This package does not create any extra overhead and uses regular C# objects. It integrates into Unity and initializes itself with the `RuntimeInitializeOnLoadMethod` attribute.
+This package does not create any extra overhead and uses regular C# objects. It integrates into Unity and initializes itself with the usage of the `RuntimeInitializeOnLoadMethod` attribute. EnterPlaymodeOptions are also supported as the static fields are overridden and initialized automatically when required.
 
 ## Installation
 Having the necessary scripts on the project is all that is needed. This package is best installed with the Unity Package Manager via the git URL.
 
 1. Open the Unity Package Manager.
 2. Select "Add package from git URL..."  
-3. Paste `https://github.com/SametHope/the-locator.git#main` as the URL.
+3. Paste ` https://github.com/SametHope/the-locator.git#main ` as the URL.
 
 ### Optional
 I also highly recommend installation of the [Unity3D-SerializableInterface](https://github.com/Thundernerd/Unity3D-SerializableInterface) package together with this package. It's installation is a bit more annoying though. If you have NPM and openupm-cli, follow instructions on the repo above, otherwise follow the guide below.
@@ -101,7 +101,7 @@ You may modify the way locator is works with some pre-defined fields.
 ```cs
 public static class Locator
 {
-  // Setting this field before RuntimeInitializeLoadType.BeforeSplashScreen) will override the implementation
+  // Setting this field before RuntimeInitializeLoadType.BeforeSplashScreen will override the implementation
   public static Func<ILocator> GetNewLocator { get; set; }
   // Setting this field will override the way errors are logged
   public static Action<object> LogError { get; set; }
