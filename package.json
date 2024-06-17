@@ -1,0 +1,10 @@
+{
+	"name": "com.samethope.thelocator",
+	"version": "1.0.0",
+	"displayName": "TheLocator",
+	"description": "A service locator implementation for Unity with consideration for gameobjects, scenes and the global scope.",
+	"author": {
+		"name": "SametHope",
+		"url": "https://github.com/SametHope/the-locator"
+	}
+}
