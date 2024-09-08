@@ -29,17 +29,35 @@ using UnityEngine.SceneManagement;
 /// </remarks>
 public static class Locator
 {
-    internal static Dictionary<(int instanceID, string? name), object> GO_Containers { get; set; }
-    internal static Dictionary<(string scenePath, string? name), object> SC_Containers { get; set; }
-    internal static Dictionary<(Type type, string? name), object> GL_Containers { get; set; }
+    /// <summary>
+    /// Contains the registered services for <see cref="GameObject"/>/<see cref="Component"/> scopes.
+    /// <para>
+    /// </para>
+    /// Do not modify this dictionary directly unless you have a reason to. Use Get, Register, and Unregister methods instead.
+    /// </summary>
+    public static Dictionary<(int instanceID, string? name), object> Containers_GameObject { get; set; }
+    /// <summary>
+    /// Contains the registered services for <see cref="Scene"/> scopes.
+    /// <para>
+    /// </para>
+    /// Do not modify this dictionary directly unless you have a reason to. Use Get, Register, and Unregister methods instead.
+    /// </summary>
+    public static Dictionary<(string scenePath, string? name), object> Containers_Scene { get; set; }
+    /// <summary>
+    /// Contains the registered services for <see cref="Global"/> scope.
+    /// <para>
+    /// </para>
+    /// Do not modify this dictionary directly unless you have a reason to. Use Get, Register, and Unregister methods instead.
+    /// </summary>
+    public static Dictionary<(Type type, string? name), object> Containers_Global { get; set; }
 
     // This method is necessary to work with enter play mode options
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void Bootstrap()
     {
-        GO_Containers = new();
-        SC_Containers = new();
-        GL_Containers = new();
+        Containers_GameObject = new();
+        Containers_Scene = new();
+        Containers_Global = new();
     }
 
     #region Global Scope Calls
@@ -49,7 +67,8 @@ public static class Locator
     /// </summary>
     public static T Get<T>(string? serviceName = null) where T : class
     {
-        if(GL_Containers.TryGetValue((typeof(T), serviceName), out object globalService))
+        var t = typeof(T);
+        if(Containers_Global.TryGetValue((typeof(T), serviceName), out object globalService))
         {
             return (T)globalService;
         }
@@ -61,6 +80,7 @@ public static class Locator
     /// </summary>
     public static bool TryGet<T>(out T service, string? serviceName = null) where T : class
     {
+        var t = typeof(T);
         try { service = Get<T>(serviceName); return true; }
         catch { service = null; return false; }
     }
@@ -76,12 +96,12 @@ public static class Locator
             throw new Exception($"Could not register global service of type {typeof(T)} because service is null.");
         }
 
-        if(GL_Containers.ContainsKey((typeof(T), serviceName)))
+        if(Containers_Global.ContainsKey((typeof(T), serviceName)))
         {
             throw new Exception($"Could not register global service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} because service is already registered.");
         }
 
-        GL_Containers.Add((typeof(T), serviceName), service);
+        Containers_Global.Add((typeof(T), serviceName), service);
     }
     /// <summary>
     /// Try to register the global service of type <typeparamref name="T"/> with the optional name <paramref name="serviceName"/>.
@@ -102,24 +122,24 @@ public static class Locator
         {
             throw new Exception($"Could not unregister global service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} because service is null.");
         }
-        if(!GL_Containers.ContainsKey((typeof(T), serviceName)))
+        if(!Containers_Global.ContainsKey((typeof(T), serviceName)))
         {
             throw new Exception($"Could not unregister global service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} because service is not registered.");
         }
 
-        GL_Containers.Remove((typeof(T), serviceName));
+        Containers_Global.Remove((typeof(T), serviceName));
     }
     /// <summary>
     /// Unregister the global service of type <typeparamref name="T"/> with the optional name <paramref name="serviceName"/>.
     /// </summary>
     public static void Unregister<T>(string? serviceName = null) where T : class
     {
-        if(!GL_Containers.ContainsKey((typeof(T), serviceName)))
+        if(!Containers_Global.ContainsKey((typeof(T), serviceName)))
         {
             throw new Exception($"Could not unregister global service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} because service is not registered.");
         }
 
-        GL_Containers.Remove((typeof(T), serviceName));
+        Containers_Global.Remove((typeof(T), serviceName));
     }
 
     /// <summary>
@@ -148,7 +168,8 @@ public static class Locator
     /// </summary>
     public static T Get<T>(Scene scene, string? serviceName = null) where T : class
     {
-        if(SC_Containers.TryGetValue((scene.path, serviceName), out object sceneService))
+        var t = typeof(T);
+        if(Containers_Scene.TryGetValue((scene.path, serviceName), out object sceneService))
         {
             return (T)sceneService;
         }
@@ -165,6 +186,8 @@ public static class Locator
     /// </summary>
     public static bool TryGet<T>(Scene scene, out T service, string? serviceName = null) where T : class
     {
+        // T BECAME OBJECT HERE WHYY
+        var t = typeof(T);
         try { service = Get<T>(scene, serviceName); return true; }
         catch { service = null; return false; }
     }
@@ -180,12 +203,12 @@ public static class Locator
             throw new Exception($"Could not register service of type {typeof(T)} for the scene {scene.path} because service is null.");
         }
 
-        if(SC_Containers.ContainsKey((scene.path, serviceName)))
+        if(Containers_Scene.ContainsKey((scene.path, serviceName)))
         {
             throw new Exception($"Could not register service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the scene {scene.path} because service is already registered.");
         }
 
-        SC_Containers.Add((scene.path, serviceName), service);
+        Containers_Scene.Add((scene.path, serviceName), service);
     }
     /// <summary>
     /// Try to register the service of type <typeparamref name="T"/> for the scene <paramref name="scene"/> with the optional name <paramref name="serviceName"/>.
@@ -206,24 +229,24 @@ public static class Locator
         {
             throw new Exception($"Could not unregister service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the scene {scene.path} because service is null.");
         }
-        if(!SC_Containers.ContainsKey((scene.path, serviceName)))
+        if(!Containers_Scene.ContainsKey((scene.path, serviceName)))
         {
             throw new Exception($"Could not unregister service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the scene {scene.path} because service is not registered.");
         }
 
-        SC_Containers.Remove((scene.path, serviceName));
+        Containers_Scene.Remove((scene.path, serviceName));
     }
     /// <summary>
     /// Unregister the service of type <typeparamref name="T"/> for the scene <paramref name="scene"/> with the optional name <paramref name="serviceName"/>.
     /// </summary>
     public static void Unregister<T>(Scene scene, string? serviceName = null) where T : class
     {
-        if(!SC_Containers.ContainsKey((scene.path, serviceName)))
+        if(!Containers_Scene.ContainsKey((scene.path, serviceName)))
         {
             throw new Exception($"Could not unregister service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the scene {scene.path} because service is not registered.");
         }
 
-        SC_Containers.Remove((scene.path, serviceName));
+        Containers_Scene.Remove((scene.path, serviceName));
     }
 
     /// <summary>
@@ -252,14 +275,15 @@ public static class Locator
     /// </summary>
     public static T Get<T>(GameObject gameObject, string? serviceName = null) where T : class
     {
-        if(GO_Containers.TryGetValue((gameObject.GetInstanceID(), serviceName), out object goService))
+        var t = typeof(T);
+        if(Containers_GameObject.TryGetValue((gameObject.GetInstanceID(), serviceName), out object goService))
         {
             return (T)goService;
         }
 
-        if(TryGet(gameObject.scene, out object sceneService, serviceName))
+        if(TryGet(gameObject.scene, out T sceneService, serviceName))
         {
-            return (T)sceneService;
+            return sceneService;
         }
 
         throw new Exception($"Could not get service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the gameobject {gameObject.name} because it is not registered.");
@@ -269,6 +293,7 @@ public static class Locator
     /// </summary>
     public static bool TryGet<T>(GameObject gameObject, out T service, string? serviceName = null) where T : class
     {
+        var t = typeof(T);
         try { service = Get<T>(gameObject, serviceName); return true; }
         catch { service = null; return false; }
     }
@@ -300,12 +325,12 @@ public static class Locator
             throw new Exception($"Could not register service of type {typeof(T)} for the gameobject {gameObject.name} because service is null.");
         }
 
-        if(GO_Containers.ContainsKey((gameObject.GetInstanceID(), serviceName)))
+        if(Containers_GameObject.ContainsKey((gameObject.GetInstanceID(), serviceName)))
         {
             throw new Exception($"Could not register service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the gameobject {gameObject.name} because service is already registered.");
         }
 
-        GO_Containers.Add((gameObject.GetInstanceID(), serviceName), service);
+        Containers_GameObject.Add((gameObject.GetInstanceID(), serviceName), service);
     }
     /// <summary>
     /// Try to register the service of type <typeparamref name="T"/> for the gameobject <paramref name="gameObject"/> with the optional name <paramref name="serviceName"/>.
@@ -346,12 +371,12 @@ public static class Locator
         {
             throw new Exception($"Could not unregister service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} because gameobject is null.");
         }
-        if(!GO_Containers.ContainsKey((gameObject.GetInstanceID(), serviceName)))
+        if(!Containers_GameObject.ContainsKey((gameObject.GetInstanceID(), serviceName)))
         {
             throw new Exception($"Could not unregister service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the gameobject {gameObject.name} because service is not registered.");
         }
 
-        GO_Containers.Remove((gameObject.GetInstanceID(), serviceName));
+        Containers_GameObject.Remove((gameObject.GetInstanceID(), serviceName));
     }
     /// <summary>
     /// Unregister the service of type <typeparamref name="T"/> for the gameobject <paramref name="gameObject"/> with the optional name <paramref name="serviceName"/>.
@@ -362,12 +387,12 @@ public static class Locator
         {
             throw new Exception($"Could not unregister service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} because gameobject is null.");
         }
-        if(!GO_Containers.ContainsKey((gameObject.GetInstanceID(), serviceName)))
+        if(!Containers_GameObject.ContainsKey((gameObject.GetInstanceID(), serviceName)))
         {
             throw new Exception($"Could not unregister service of type {typeof(T)}{(serviceName == null ? "" : $" with the name {serviceName}")} for the gameobject {gameObject.name} because service is not registered.");
         }
 
-        GO_Containers.Remove((gameObject.GetInstanceID(), serviceName));
+        Containers_GameObject.Remove((gameObject.GetInstanceID(), serviceName));
     }
 
     /// <summary>

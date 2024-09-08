@@ -1,0 +1,16 @@
+{
+    "name": "SametHope.TheLocator.Tests",
+    "rootNamespace": "SametHope.TheLocator.Tests",
+    "references": [
+        "GUID:70a6641347d22f64e92a49c2f89ea3c9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
