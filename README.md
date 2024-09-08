@@ -1,10 +1,8 @@
 # TheLocator
-A service locator implementation for Unity with consideration for gameobjects and their hierarchies, scenes and the global scope.  
+A service locator implementation for Unity with that supports multiple services of a single type and has consideration for gameobjects, scenes and the global scope. 
 
 ## About
-This is a Unity package that implements the service locator pattern in a specialized manner for Unity.
-
-This implementation of the pattern defines containers/scopes for gameobjects, scenes and the global scope. It allows the user to get, register or unregister services. Getting of a service is delegated to higher containers if a lower one fails.
+This implementation of the pattern defines containers/scopes for gameobjects, scenes and the global scope. It allows the user to get, register or unregister services within these scopes. An optional name can also be provided to later identify a service beside its type, allowing multiple instances of a single type to be registered. Getting of a service is delegated to higher level scopes if a lower one fails.
 
 This package does not create any extra overhead and uses regular C# objects. It integrates into Unity and initializes itself with the usage of the `RuntimeInitializeOnLoadMethod` attribute. EnterPlaymodeOptions are also supported as the static fields are overridden and initialized automatically when required.
 
@@ -14,112 +12,93 @@ Having the necessary scripts on the project is all that is needed. This package 
 1. Open the Unity Package Manager.
 2. Select "Add package from git URL..."  
 3. Paste ` https://github.com/SametHope/the-locator.git#main ` as the URL.
+4. Done.
 
 ### Optional
-I also highly recommend installation of the [Unity3D-SerializableInterface](https://github.com/Thundernerd/Unity3D-SerializableInterface) package together with this package. It's installation is a bit more annoying though. If you have NPM and openupm-cli, follow instructions on the repo above, otherwise follow the guide below.
+I also highly recommend installation of the [Unity3D-SerializableInterface](https://github.com/Thundernerd/Unity3D-SerializableInterface) package together with this package. It's installation requires more work than this one. If you have NPM and openupm-cli, follow instructions on the repo above, otherwise follow the guide below.
 
 1. Make sure there are no compilation errors on the project.
 2. Download the [Installer .unitypackage](https://package-installer.glitch.me/v1/installer/package.openupm.com/net.tnrd.serializableinterface?registry=https://package.openupm.com).
 3. Import the whole package. This will trigger the installation of the actual package.
+4. Done.
 
 ## Usage
-This implementation of the service locator pattern has scopes for gameobjects, scenes and the global scope.  
-
-Services must be handled by the user, being manually added and removed.
+Services must be manually added and removed as one would expect.
 
 ### Register Services
 ```cs
-// Have the service to register available
-var serviceObject = ExampleService as IExampleService;
-var serviceObject = GetComponent<IExampleService>();
+// Register a service for this gameobject via its component, itself, its scene and the global scope in order
+Locator.Register<IExampleService>(serviceObject, this);
+Locator.Register<IExampleService>(serviceObject, gameObject);
+Locator.Register<IExampleService>(serviceObject, gameObject.scene);
+Locator.Register<IExampleService>(serviceObject);
 
-// Register a service for the gameobject
-Locator.Register(serviceObject, targetGO); 
+// Do the same but with a named service
+Locator.Register<IExampleService>(serviceObject, this, "namedService");
+Locator.Register<IExampleService>(serviceObject, gameObject, "namedService");
+Locator.Register<IExampleService>(serviceObject, gameObject.scene, "namedService");
+Locator.Register<IExampleService>(serviceObject, "namedService");
 
-// Register a service for the scene of the gameobject
-Locator.Register(serviceObject, targetGO.scene); 
-
-// Register a global service
-Locator.Register(serviceObject);
-
-// Try methods will not log errors if the service is already registered
-Locator.TryRegister(serviceObject, targetGO); 
-Locator.TryRegister(serviceObject, targetGO.scene); 
-Locator.TryRegister(serviceObject); 
+// Use functions with Try prefix to not get exceptions if the operation fails
+Locator.TryRegister<IExampleService>(serviceObject, this);
+Locator.TryRegister<IExampleService>(serviceObject, this, "namedService");
+...
 ```
 
 ### Unregister Services
 ```cs
-// Unregister a service for the gameobject
-Locator.Unregister<IExampleService>(targetGO);
-
-// Unregister a service for the scene of the gameobject
-Locator.Unregister<IExampleService>(targetGO.scene);
-
-// Unregister a global service
+// Unregister a service for this gameobject via its component, itself, its scene and the global scope in order
+Locator.Unregister<IExampleService>(this);
+Locator.Unregister<IExampleService>(gameObject);
+Locator.Unregister<IExampleService>(gameObject.scene);
 Locator.Unregister<IExampleService>();
 
-// Try methods will not log errors if the service is already not registered
-Locator.TryUnregister<IExampleService>(targetGO);
-Locator.TryUnregister<IExampleService>(targetGO.scene);
-Locator.TryUnregister<IExampleService>();
+// Do the same but with a named service
+Locator.Unregister<IExampleService>(this, "namedService");
+Locator.Unregister<IExampleService>(gameObject, "namedService");
+Locator.Unregister<IExampleService>(gameObject.scene, "namedService");
+Locator.Unregister<IExampleService>("namedService");
 
-// You may also unregister services via objects rather than type
-// Type is then inferred
-Locator.Unregister(serviceObject, TargetGO);
-Locator.Unregister(serviceObject, TargetGO.scene);
-Locator.Unregister(serviceObject);
+// Use functions with Try prefix to not get exceptions if the operation fails
+Locator.Unregister<IExampleService>(this);
+Locator.TryUnregister<IExampleService>(serviceObject, this, "namedService");
 ...
 ```
 
 ### Get Services
 ```cs
-// Get a service for the gameobject
-// This will check the scene and later the global scope for the service if it is not found for the gameobject
-var service = Locator.Get<IExampleService>(targetGO);
+// Get a service for this gameobject via its component, itself, its scene and the global scope in order
+Locator.Get<IExampleService>(this);
+Locator.Get<IExampleService>(gameObject); // Will check the scene if service is not found
+Locator.Get<IExampleService>(gameObject.scene);// Will check the global scope if service is not found
+Locator.Get<IExampleService>();
 
-// Get a service for the gameobject, consider parents
-// This will check parents of the gameobject before the scene and the global scope until the service is found
-var service = Locator.Get<IExampleService>(targetGO, true);
+// Do the same but with a named service
+Locator.Get<IExampleService>(this, "namedService");
+Locator.Get<IExampleService>(gameObject, "namedService");
+Locator.Get<IExampleService>(gameObject.scene, "namedService");
+Locator.Get<IExampleService>("namedService");
 
-// Get a service for the scene of the gameobject
-// This will check the global scope if service is not found for the scene
-var service = Locator.Get<IExampleService>(targetGO.scene);
-
-// Get a global service
-var service = Locator.Get<IExampleService>();
-
-// Try methods will not log errors if the service is not found
-Locator.TryGet<IExampleService>(targetGO, out var service);
-Locator.TryGet<IExampleService>(targetGO.scene, out var service);
-Locator.TryGet<IExampleService>(out var service);
+// Use functions with Try prefix to not get exceptions if the operation fails
+Locator.TryGet<IExampleService>(this, out var service);
+Locator.TryGet<IExampleService>(this, out var namedService, "namedService");
+...
 ```
 
-### Further configuration
-You may modify the way locator is works with some pre-defined fields.  
-
+### Misc
 ```cs
-public static class Locator
-{
-  // Setting this field before RuntimeInitializeLoadType.BeforeSplashScreen will override the implementation
-  public static Func<ILocator> GetNewLocator { get; set; }
-  // Setting this field will override the way errors are logged
-  public static Action<object> LogError { get; set; }
-}
+// If type is not provided it is assumed, these are also valid signatures
+Locator.Register(serviceObject, gameObject.scene);
+Locator.Unregister(serviceObject);
+Locator.TryGet(this, out IExampleService namedService, "namedService");
+...
 ```
 
-## Behind The Scenes
-Here is a peek at the default locators implementation which is pretty self explanatory. Rest of the package (`Locator` class) can be considered like a wrapper that provides means to access and change the `ILocator` implementation easily.
-```cs
-public class DefaultLocator : ILocator
-{
-  // key is gameobject instance id
-  private readonly Dictionary<int, Dictionary<Type, object>> _gameObjectContainers;
-  // key is scene path 
-  private readonly Dictionary<string, Dictionary<Type, object>> _sceneContainers; 
-  private readonly Dictionary<Type, object> _globalContainer;
-  
-  // Implementation of the ILocator
-  ...
-}
-```
+### Documentation
+All functions have XML documentation without exception. The `Locator` class even has a short summary of usage.  
+![alt text](Images/1.png)
+![alt text](Images/3.png)
+
+### Tests
+There are about 300 lines of tests that cover all functionality. 
+![alt text](Images/2.png)
