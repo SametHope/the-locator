@@ -9,6 +9,7 @@ public class TestRunner : MonoBehaviour
         TestNonExistents();
         TestGeneral();
         TestMultiName();
+        TestMultiSameScope();
         PrepareTestStaticsForNextTime();
 
         if(_allGood)
@@ -260,7 +261,37 @@ public class TestRunner : MonoBehaviour
         CheckCondition(Locator.Containers_Scene.Count == 0, true);
         CheckCondition(Locator.Containers_GameObject.Count == 0, true);
     }
+    private void TestMultiSameScope()
+    {
+        CheckException(() => Locator.Register(new ExampleService(), null), false);
+        CheckException(() => Locator.Register(new ExampleService(), (GameObject)null, "x"), true);
 
+        CheckException(() => Locator.Unregister<ExampleService>((GameObject)null, "x"), true);
+        CheckException(() => Locator.Unregister<ExampleService>(null), false);
+
+        CheckException(() => Locator.Register(new ExampleService(), (Component)null), true);
+        CheckException(() => Locator.Register(new ExampleService(), (Component)null, "x"), true);
+
+        CheckException(() => Locator.Unregister<ExampleService>((Component)null, "x"), true);
+        CheckException(() => Locator.Unregister<ExampleService>((Component)null), true);
+
+        CheckException(() => Locator.Register(new ExampleService(), gameObject, "a"), false);
+        CheckException(() => Locator.Register(new ExampleService(), gameObject, "b"), false);
+        CheckException(() => Locator.Register(new ExampleService(), gameObject, "c"), false);
+
+        CheckException(() => Locator.Register(new ExampleService(), gameObject.scene, "d"), false);
+        CheckException(() => Locator.Register(new ExampleService(), gameObject.scene, "e"), false);
+        CheckException(() => Locator.Register(new ExampleService(), gameObject.scene, "f"), false);
+
+        CheckException(() => Locator.Unregister<ExampleService>(gameObject, "a"), false);
+        CheckException(() => Locator.Unregister<ExampleService>(gameObject, "b"), false);
+        CheckException(() => Locator.Unregister<ExampleService>(gameObject, "c"), false);
+
+        CheckException(() => Locator.Unregister<ExampleService>(gameObject.scene, "d"), false);
+        CheckException(() => Locator.Unregister<ExampleService>(gameObject.scene, "e"), false);
+        CheckException(() => Locator.Unregister<ExampleService>(gameObject.scene, "f"), false);
+
+    }
     public static void CheckException(System.Action action, bool expected)
     {
         bool threw = false;
